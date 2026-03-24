@@ -43,29 +43,33 @@ public partial struct EnemySpawnSystem : ISystem
 
         foreach (var spawner in SystemAPI.Query<RefRW<EnemySpawner>>())
         {
+            if (spawner.ValueRO.Prefab == Entity.Null)
+                continue;
+
             spawner.ValueRW.SpawnTimer -= dt;
             if (spawner.ValueRO.SpawnTimer > 0f)
                 continue;
 
             spawner.ValueRW.SpawnTimer = spawner.ValueRO.SpawnInterval;
 
-            if (enemyCount >= spawner.ValueRO.MaxEnemies)
-                continue;
-
-            if (spawner.ValueRO.Prefab == Entity.Null)
-                continue;
-
-            // 플레이어 주변 원형 범위에서 스폰
-            float angle = _random.NextFloat(0f, math.PI * 2f);
             float radius = spawner.ValueRO.SpawnRadius;
-            float3 spawnPos = playerPos + new float3(
-                math.cos(angle) * radius,
-                math.sin(angle) * radius,
-                0f
-            );
+            int max = spawner.ValueRO.MaxEnemies;
+            int count = spawner.ValueRO.SpawnPerTick;
 
-            Entity enemy = ecb.Instantiate(spawner.ValueRO.Prefab);
-            ecb.SetComponent(enemy, LocalTransform.FromPosition(spawnPos));
+            // SpawnPerTick만큼 한번에 스폰
+            for (int i = 0; i < count && enemyCount < max; i++)
+            {
+                float angle = _random.NextFloat(0f, math.PI * 2f);
+                float3 spawnPos = playerPos + new float3(
+                    math.cos(angle) * radius,
+                    math.sin(angle) * radius,
+                    0f
+                );
+
+                Entity enemy = ecb.Instantiate(spawner.ValueRO.Prefab);
+                ecb.SetComponent(enemy, LocalTransform.FromPosition(spawnPos));
+                enemyCount++;
+            }
         }
 
         ecb.Playback(state.EntityManager);

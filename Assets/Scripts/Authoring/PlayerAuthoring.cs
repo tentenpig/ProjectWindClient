@@ -3,35 +3,27 @@ using UnityEngine;
 
 /// <summary>
 /// 플레이어 엔티티 Authoring 컴포넌트
-/// Unity Editor에서 플레이어 프리팹에 이 컴포넌트를 추가하여 설정
+/// 값은 GameConfig.json에서 로드
 /// </summary>
 public class PlayerAuthoring : MonoBehaviour
 {
-    [Header("Stats")]
-    public float MaxHealth = 100f;
-    public float MoveSpeed = 5f;
-
-    [Header("Auto Attack")]
-    public float AttackInterval = 1f;
-    public float AttackDamage = 10f;
-    public float ProjectileSpeed = 10f;
-    public float AttackRange = 8f;
     public GameObject ProjectilePrefab;
 
     public class Baker : Baker<PlayerAuthoring>
     {
         public override void Bake(PlayerAuthoring authoring)
         {
+            var cfg = GameConfigManager.Config.player;
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
             AddComponent<PlayerTag>(entity);
             AddComponent(entity, new PlayerInput { Move = default });
             AddComponent(entity, new Health
             {
-                Current = authoring.MaxHealth,
-                Max = authoring.MaxHealth
+                Current = cfg.maxHealth,
+                Max = cfg.maxHealth
             });
-            AddComponent(entity, new MoveSpeed { Value = authoring.MoveSpeed });
+            AddComponent(entity, new MoveSpeed { Value = cfg.moveSpeed });
             AddComponent(entity, new MoveDirection { Value = default });
             AddComponent(entity, new PlayerLevel
             {
@@ -42,10 +34,10 @@ public class PlayerAuthoring : MonoBehaviour
             AddComponent(entity, new AutoAttack
             {
                 Timer = 0f,
-                Interval = authoring.AttackInterval,
-                Damage = authoring.AttackDamage,
-                ProjectileSpeed = authoring.ProjectileSpeed,
-                Range = authoring.AttackRange,
+                Interval = cfg.attackInterval,
+                Damage = cfg.attackDamage,
+                ProjectileSpeed = cfg.projectileSpeed,
+                Range = cfg.attackRange,
                 ProjectilePrefab = authoring.ProjectilePrefab != null
                     ? GetEntity(authoring.ProjectilePrefab, TransformUsageFlags.Dynamic)
                     : Entity.Null

@@ -1,0 +1,33 @@
+{
+  "player": {
+    "maxHealth": 100,
+    "moveSpeed": 5,
+    "attackInterval": 0.01,
+    "attackDamage": 10,
+    "projectileSpeed": 10,
+    "attackRange": 32
+  },
+  "enemies": [
+    {
+      "id": "default",
+      "maxHealth": 20,
+      "moveSpeed": 2,
+      "experienceValue": 5
+    }
+  ],
+  "projectile": {
+    "speed": 10,
+    "damage": 10,
+    "lifetime": 2,
+    "hitRadius": 0.5
+  },
+  "spawner": {
+    "spawnInterval": 0.1,
+    "spawnRadius": 15,
+    "maxEnemies": 5000,
+    "spawnPerTick": 50
+  },
+  "camera": {
+    "orthographicSize": 16.7
+  }
+}

@@ -4,29 +4,26 @@ using UnityEngine;
 
 /// <summary>
 /// 투사체 Authoring 컴포넌트
+/// 값은 GameConfig.json에서 로드
 /// </summary>
 public class ProjectileAuthoring : MonoBehaviour
 {
-    public float DefaultSpeed = 10f;
-    public float DefaultDamage = 10f;
-    public float DefaultLifetime = 2f;
-    public float HitRadius = 0.5f;
-
     public class Baker : Baker<ProjectileAuthoring>
     {
         public override void Bake(ProjectileAuthoring authoring)
         {
+            var cfg = GameConfigManager.Config.projectile;
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
             AddComponent(entity, new Projectile
             {
-                Speed = authoring.DefaultSpeed,
-                Damage = authoring.DefaultDamage,
-                Lifetime = authoring.DefaultLifetime,
+                Speed = cfg.speed,
+                Damage = cfg.damage,
+                Lifetime = cfg.lifetime,
                 Direction = float2.zero,
-                HitRadius = authoring.HitRadius
+                HitRadius = cfg.hitRadius
             });
-            AddComponent(entity, new MoveSpeed { Value = authoring.DefaultSpeed });
+            AddComponent(entity, new MoveSpeed { Value = cfg.speed });
             AddComponent(entity, new MoveDirection { Value = default });
         }
     }

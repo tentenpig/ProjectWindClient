@@ -11,4 +11,5 @@ public struct EnemySpawner : IComponentData
     public float SpawnRadius;
     public int MaxEnemies;
     public int CurrentWave;
+    public int SpawnPerTick;
 }
