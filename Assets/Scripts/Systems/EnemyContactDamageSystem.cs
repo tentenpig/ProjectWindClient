@@ -19,6 +19,7 @@ public partial struct EnemyContactDamageSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<PlayerTag>();
+        state.RequireForUpdate<GamePlaying>();
         _damageTimer = 0f;
     }
 

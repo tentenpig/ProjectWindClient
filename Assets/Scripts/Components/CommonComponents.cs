@@ -2,6 +2,11 @@ using Unity.Entities;
 using Unity.Mathematics;
 
 /// <summary>
+/// 게임이 진행 중임을 나타내는 싱글톤 태그 (Title/GameOver 상태에서는 제거됨)
+/// </summary>
+public struct GamePlaying : IComponentData { }
+
+/// <summary>
 /// 체력 컴포넌트 (플레이어, 적 공용)
 /// </summary>
 public struct Health : IComponentData

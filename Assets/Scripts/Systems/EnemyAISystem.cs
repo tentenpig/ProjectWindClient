@@ -14,6 +14,7 @@ public partial struct EnemyAISystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<PlayerTag>();
+        state.RequireForUpdate<GamePlaying>();
     }
 
     [BurstCompile]

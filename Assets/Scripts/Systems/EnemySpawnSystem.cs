@@ -16,6 +16,7 @@ public partial struct EnemySpawnSystem : ISystem
     {
         state.RequireForUpdate<EnemySpawner>();
         state.RequireForUpdate<PlayerTag>();
+        state.RequireForUpdate<GamePlaying>();
         _random = Random.CreateFromIndex(42);
     }
 

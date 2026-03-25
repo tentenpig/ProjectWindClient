@@ -13,6 +13,7 @@ public partial struct PlayerInputSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<PlayerTag>();
+        state.RequireForUpdate<GamePlaying>();
     }
 
     // Input은 메인 스레드에서만 읽을 수 있으므로 BurstCompile 불가

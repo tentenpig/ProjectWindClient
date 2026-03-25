@@ -13,6 +13,12 @@ using Unity.Transforms;
 public partial struct MovementSystem : ISystem
 {
     [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<GamePlaying>();
+    }
+
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         float dt = SystemAPI.Time.DeltaTime;
