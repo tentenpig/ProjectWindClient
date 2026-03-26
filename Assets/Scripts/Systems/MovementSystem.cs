@@ -78,6 +78,12 @@ public partial struct MovementSystem : ISystem
         tilePos.Target = target;
         tilePos.Progress = 0f;
         tilePos.IsMoving = true;
+
+        // 서버에 이동 통보
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsConnected)
+        {
+            NetworkManager.Instance.SendMove(target.x, target.y, dir.x, dir.y);
+        }
     }
 
     /// <summary>

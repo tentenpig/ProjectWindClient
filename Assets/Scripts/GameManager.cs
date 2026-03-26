@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// 게임 상태를 관리하고 Title/GameOver UI를 제어하는 매니저
@@ -10,7 +11,7 @@ using UnityEngine.UI;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    private enum GameState { Title, Playing, GameOver }
+    private enum GameState { Title, Connecting, Playing, GameOver }
 
     private GameState _state = GameState.Title;
     private EntityManager _entityManager;
@@ -22,11 +23,14 @@ public class GameManager : MonoBehaviour
     private Canvas _uiCanvas;
     private GameObject _titlePanel;
     private GameObject _gameOverPanel;
+    private GameObject _connectingPanel;
+    private TextMeshProUGUI _connectingText;
 
     private void Start()
     {
         CreateUICanvas();
         LoadUIPanels();
+        EnsureNetworkManager();
 
         if (_skipTitle)
         {
@@ -57,13 +61,46 @@ public class GameManager : MonoBehaviour
 
     private void StartGame()
     {
-        _state = GameState.Playing;
+        _state = GameState.Connecting;
         _titlePanel.SetActive(false);
+        ShowConnecting("서버에 연결하는 중...");
+
+        NetworkManager.Instance.Connect(success =>
+        {
+            if (success)
+            {
+                SetConnectingText("로그인 중...");
+                NetworkManager.Instance.OnLoginResponse += OnLoginResponse;
+                NetworkManager.Instance.SendLogin("Player_" + UnityEngine.Random.Range(1000, 9999));
+            }
+            else
+            {
+                Debug.LogError("[GameManager] 서버 연결 실패");
+                HideConnecting();
+                ShowTitle();
+            }
+        });
+    }
+
+    private void OnLoginResponse(S_Login response)
+    {
+        NetworkManager.Instance.OnLoginResponse -= OnLoginResponse;
+        HideConnecting();
+
+        if (!response.Success)
+        {
+            Debug.LogError("[GameManager] 로그인 실패");
+            ShowTitle();
+            return;
+        }
+
+        Debug.Log($"[GameManager] 로그인 성공: PlayerId={response.PlayerId}, Map={response.MapId}, Pos=({response.Position.X},{response.Position.Y})");
 
         _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _entityManager.CreateEntity(typeof(GamePlaying));
         _gamePlayingQuery = _entityManager.CreateEntityQuery(typeof(GamePlaying));
         _initialized = true;
+        _state = GameState.Playing;
     }
 
     private void CheckPlayerDeath()
@@ -149,6 +186,72 @@ public class GameManager : MonoBehaviour
         BindButton(_gameOverPanel, "TitleButton", GoToTitle);
 
         _gameOverPanel.SetActive(false);
+    }
+
+    // ─────────────────────────────────────
+    // 연결 상태 UI
+    // ─────────────────────────────────────
+
+    private void CreateConnectingPanel()
+    {
+        _connectingPanel = new GameObject("ConnectingPanel");
+        _connectingPanel.transform.SetParent(_uiCanvas.transform, false);
+
+        var rect = _connectingPanel.AddComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        // 반투명 배경
+        var bg = _connectingPanel.AddComponent<Image>();
+        bg.color = new Color(0f, 0f, 0f, 0.7f);
+
+        // 상태 텍스트
+        var textGO = new GameObject("StatusText");
+        textGO.transform.SetParent(_connectingPanel.transform, false);
+        var textRect = textGO.AddComponent<RectTransform>();
+        textRect.anchorMin = new Vector2(0.5f, 0.5f);
+        textRect.anchorMax = new Vector2(0.5f, 0.5f);
+        textRect.sizeDelta = new Vector2(600f, 100f);
+
+        _connectingText = textGO.AddComponent<TextMeshProUGUI>();
+        _connectingText.text = "";
+        _connectingText.fontSize = 36;
+        _connectingText.alignment = TextAlignmentOptions.Center;
+        _connectingText.color = Color.white;
+
+        _connectingPanel.SetActive(false);
+    }
+
+    private void ShowConnecting(string message)
+    {
+        if (_connectingPanel == null)
+            CreateConnectingPanel();
+
+        _connectingText.text = message;
+        _connectingPanel.SetActive(true);
+    }
+
+    private void SetConnectingText(string message)
+    {
+        if (_connectingText != null)
+            _connectingText.text = message;
+    }
+
+    private void HideConnecting()
+    {
+        if (_connectingPanel != null)
+            _connectingPanel.SetActive(false);
+    }
+
+    private static void EnsureNetworkManager()
+    {
+        if (NetworkManager.Instance == null)
+        {
+            var go = new GameObject("NetworkManager");
+            go.AddComponent<NetworkManager>();
+        }
     }
 
     private static void BindButton(GameObject panel, string buttonName, UnityEngine.Events.UnityAction action)

@@ -3,8 +3,8 @@ using Unity.Mathematics;
 using Unity.Transforms;
 
 /// <summary>
-/// 게임 시작 시 플레이어를 맵 시작 위치(타일 중앙)에 배치하는 시스템
-/// GamePlaying 엔티티가 생성된 첫 프레임에만 실행
+/// 게임 시작 시 플레이어를 배치하는 시스템
+/// 서버 연결 시 S_Login에서 받은 위치를, 오프라인 시 GameConfig의 시작 위치를 사용
 /// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
 [UpdateBefore(typeof(PlayerInputSystem))]
@@ -24,8 +24,18 @@ public partial struct PlayerSpawnSystem : ISystem
         if (_spawned) return;
         _spawned = true;
 
-        var map = GameConfigManager.GetStartMap();
-        int2 startTile = new int2(map.startX, map.startY);
+        int2 startTile;
+        // 서버에서 받은 위치가 있으면 사용, 없으면 로컬 설정 사용
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsConnected)
+        {
+            startTile = NetworkManager.Instance.SpawnPosition;
+        }
+        else
+        {
+            var map = GameConfigManager.GetStartMap();
+            startTile = new int2(map.startX, map.startY);
+        }
+
         float3 worldPos = new float3(startTile.x + 0.5f, startTile.y + 0.5f, 0f);
 
         foreach (var (transform, tilePos) in
@@ -42,7 +52,6 @@ public partial struct PlayerSpawnSystem : ISystem
 
     public void OnStopRunning(ref SystemState state)
     {
-        // GamePlaying이 사라지면 (게임오버/타이틀) 다음 게임에서 다시 스폰하도록 리셋
         _spawned = false;
     }
 }
