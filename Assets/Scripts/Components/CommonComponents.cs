@@ -32,6 +32,17 @@ public struct MoveDirection : IComponentData
 }
 
 /// <summary>
+/// 타일 기반 위치 및 이동 상태
+/// </summary>
+public struct TilePosition : IComponentData
+{
+    public int2 Current;    // 현재 타일 좌표
+    public int2 Target;     // 이동 목표 타일 좌표
+    public float Progress;  // 0~1 보간 진행도 (0=출발, 1=도착)
+    public bool IsMoving;   // 이동 중 여부
+}
+
+/// <summary>
 /// 데미지를 입은 대상에게 부여하는 컴포넌트
 /// </summary>
 public struct DamageEvent : IBufferElementData

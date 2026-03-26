@@ -1,4 +1,6 @@
 using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 
 /// <summary>
@@ -7,14 +9,18 @@ using UnityEngine;
 /// </summary>
 public class PlayerAuthoring : MonoBehaviour
 {
-    public GameObject ProjectilePrefab;
-
     public class Baker : Baker<PlayerAuthoring>
     {
         public override void Bake(PlayerAuthoring authoring)
         {
             var cfg = GameConfigManager.Config.player;
             var entity = GetEntity(TransformUsageFlags.Dynamic);
+
+            // SubScene 내 배치 위치를 초기 타일 좌표로 사용
+            var pos = authoring.transform.position;
+            int2 startTile = new int2(
+                (int)math.floor(pos.x),
+                (int)math.floor(pos.y));
 
             AddComponent<PlayerTag>(entity);
             AddComponent(entity, new PlayerInput { Move = default });
@@ -25,22 +31,18 @@ public class PlayerAuthoring : MonoBehaviour
             });
             AddComponent(entity, new MoveSpeed { Value = cfg.moveSpeed });
             AddComponent(entity, new MoveDirection { Value = default });
+            AddComponent(entity, new TilePosition
+            {
+                Current = startTile,
+                Target = startTile,
+                Progress = 1f,
+                IsMoving = false
+            });
             AddComponent(entity, new PlayerLevel
             {
                 Level = 1,
                 CurrentExp = 0,
                 ExpToNextLevel = 15
-            });
-            AddComponent(entity, new AutoAttack
-            {
-                Timer = 0f,
-                Interval = cfg.attackInterval,
-                Damage = cfg.attackDamage,
-                ProjectileSpeed = cfg.projectileSpeed,
-                Range = cfg.attackRange,
-                ProjectilePrefab = authoring.ProjectilePrefab != null
-                    ? GetEntity(authoring.ProjectilePrefab, TransformUsageFlags.Dynamic)
-                    : Entity.Null
             });
         }
     }

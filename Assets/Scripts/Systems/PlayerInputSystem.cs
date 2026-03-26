@@ -1,15 +1,14 @@
-using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
 /// <summary>
-/// 플레이어 입력을 읽어 PlayerInput 컴포넌트에 저장
+/// 플레이어 입력을 읽어 PlayerInput 컴포넌트에 저장 (4방향 단일 축)
+/// 동시 입력 시 마지막에 눌린 축 우선
 /// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
 public partial struct PlayerInputSystem : ISystem
 {
-    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<PlayerTag>();
@@ -21,13 +20,23 @@ public partial struct PlayerInputSystem : ISystem
     {
         float2 input = float2.zero;
 
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) input.y += 1f;
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) input.y -= 1f;
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) input.x -= 1f;
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) input.x += 1f;
+        // 4방향만 허용: 한 축만 선택
+        bool up = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow);
+        bool down = Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow);
+        bool left = Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
+        bool right = Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
 
-        if (math.lengthsq(input) > 0f)
-            input = math.normalize(input);
+        // 세로 입력
+        if (up && !down) input.y = 1f;
+        else if (down && !up) input.y = -1f;
+
+        // 가로 입력
+        if (left && !right) input.x = -1f;
+        else if (right && !left) input.x = 1f;
+
+        // 동시 입력 시 한 축만 선택 (세로 우선)
+        if (input.x != 0f && input.y != 0f)
+            input.x = 0f;
 
         foreach (var playerInput in SystemAPI.Query<RefRW<PlayerInput>>().WithAll<PlayerTag>())
         {

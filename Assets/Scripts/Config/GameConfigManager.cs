@@ -38,9 +38,9 @@ public static class GameConfigManager
             {
                 player = new PlayerConfig(),
                 enemies = new[] { new EnemyConfig() },
-                projectile = new ProjectileConfig(),
-                spawner = new SpawnerConfig(),
-                camera = new CameraConfig()
+                camera = new CameraConfig(),
+                tilemap = new TilemapConfig(),
+                maps = new[] { new MapConfig() }
             };
         }
 
@@ -61,5 +61,29 @@ public static class GameConfigManager
         }
 
         return _config.enemies.Length > 0 ? _config.enemies[0] : new EnemyConfig();
+    }
+
+    /// <summary>
+    /// id로 맵 설정을 찾는 헬퍼
+    /// </summary>
+    public static MapConfig GetMapConfig(string id)
+    {
+        if (_config?.maps == null) return new MapConfig();
+
+        foreach (var map in _config.maps)
+        {
+            if (map.id == id)
+                return map;
+        }
+
+        return _config.maps.Length > 0 ? _config.maps[0] : new MapConfig();
+    }
+
+    /// <summary>
+    /// 시작 맵 설정 반환
+    /// </summary>
+    public static MapConfig GetStartMap()
+    {
+        return GetMapConfig(Config.startMapId);
     }
 }

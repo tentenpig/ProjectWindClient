@@ -16,7 +16,14 @@
       "mcp__coplay-mcp__save_scene",
       "mcp__coplay-mcp__get_unity_logs",
       "mcp__coplay-mcp__execute_script",
-      "mcp__coplay-mcp__open_scene"
+      "mcp__coplay-mcp__open_scene",
+      "Bash(dotnet --version)",
+      "Bash(dotnet new:*)",
+      "Bash(cd:*)",
+      "Bash(dotnet build:*)",
+      "Bash(cmd //c \"rename ECS ProjectWindClient\")",
+      "Bash(cd /tmp)",
+      "Bash(powershell -Command \"Rename-Item ''D:\\\\Workbench\\\\ToyProject\\\\ECS'' ''ProjectWindClient''\")"
     ]
   }
 }

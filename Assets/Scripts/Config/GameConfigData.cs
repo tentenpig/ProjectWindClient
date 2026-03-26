@@ -9,20 +9,26 @@ public class GameConfigData
 {
     public PlayerConfig player;
     public EnemyConfig[] enemies;
-    public ProjectileConfig projectile;
-    public SpawnerConfig spawner;
     public CameraConfig camera;
+    public TilemapConfig tilemap;
+    public string startMapId = "town_01";
+    public MapConfig[] maps;
+}
+
+[Serializable]
+public class MapConfig
+{
+    public string id = "town_01";
+    public string name = "마을";
+    public int startX = 10;
+    public int startY = 7;
 }
 
 [Serializable]
 public class PlayerConfig
 {
     public float maxHealth = 100f;
-    public float moveSpeed = 5f;
-    public float attackInterval = 0.01f;
-    public float attackDamage = 10f;
-    public float projectileSpeed = 10f;
-    public float attackRange = 32f;
+    public float moveSpeed = 3f;
 }
 
 [Serializable]
@@ -35,25 +41,14 @@ public class EnemyConfig
 }
 
 [Serializable]
-public class ProjectileConfig
-{
-    public float speed = 10f;
-    public float damage = 10f;
-    public float lifetime = 2f;
-    public float hitRadius = 0.5f;
-}
-
-[Serializable]
-public class SpawnerConfig
-{
-    public float spawnInterval = 0.1f;
-    public float spawnRadius = 15f;
-    public int maxEnemies = 5000;
-    public int spawnPerTick = 50;
-}
-
-[Serializable]
 public class CameraConfig
 {
-    public float orthographicSize = 16.7f;
+    public float orthographicSize = 8f;
+}
+
+[Serializable]
+public class TilemapConfig
+{
+    public int tileSize = 16;
+    public int pixelsPerUnit = 16;
 }

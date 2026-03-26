@@ -1,11 +1,7 @@
 {
   "player": {
     "maxHealth": 100,
-    "moveSpeed": 5,
-    "attackInterval": 0.01,
-    "attackDamage": 10,
-    "projectileSpeed": 10,
-    "attackRange": 32
+    "moveSpeed": 3.0
   },
   "enemies": [
     {
@@ -15,19 +11,20 @@
       "experienceValue": 5
     }
   ],
-  "projectile": {
-    "speed": 10,
-    "damage": 10,
-    "lifetime": 2,
-    "hitRadius": 0.5
-  },
-  "spawner": {
-    "spawnInterval": 0.1,
-    "spawnRadius": 15,
-    "maxEnemies": 5000,
-    "spawnPerTick": 50
-  },
   "camera": {
-    "orthographicSize": 16.7
-  }
+    "orthographicSize": 8.0
+  },
+  "tilemap": {
+    "tileSize": 16,
+    "pixelsPerUnit": 16
+  },
+  "startMapId": "town_01",
+  "maps": [
+    {
+      "id": "town_01",
+      "name": "마을",
+      "startX": 10,
+      "startY": 7
+    }
+  ]
 }
