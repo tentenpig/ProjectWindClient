@@ -3,6 +3,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Shared.Protocol;
 using UnityEngine;
 
 /// <summary>
@@ -45,7 +47,7 @@ public class NetworkClient
 
         try
         {
-            var json = JsonUtility.ToJson(packet);
+            var json = JsonConvert.SerializeObject(packet);
             var payload = Encoding.UTF8.GetBytes(json);
             var header = new byte[4];
             BitConverter.GetBytes((ushort)type).CopyTo(header, 0);

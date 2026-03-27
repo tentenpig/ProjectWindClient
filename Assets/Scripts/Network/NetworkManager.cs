@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Concurrent;
+using Newtonsoft.Json;
+using Shared.Models;
+using Shared.Protocol;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -62,9 +65,9 @@ public class NetworkManager : MonoBehaviour
         EnqueueMainThread(() => onResult?.Invoke(success));
     }
 
-    public void SendLogin(string accountName)
+    public void SendLogin(string accountName, string password)
     {
-        Client.Send(PacketType.C_Login, new C_Login { AccountName = accountName });
+        Client.Send(PacketType.C_Login, new C_Login { AccountName = accountName, Password = password });
     }
 
     public void SendMove(int x, int y, int dirX, int dirY)
@@ -81,7 +84,7 @@ public class NetworkManager : MonoBehaviour
         switch ((PacketType)type)
         {
             case PacketType.S_Login:
-                var login = JsonUtility.FromJson<S_Login>(json);
+                var login = JsonConvert.DeserializeObject<S_Login>(json);
                 EnqueueMainThread(() =>
                 {
                     MyPlayerId = login.PlayerId;
@@ -91,17 +94,17 @@ public class NetworkManager : MonoBehaviour
                 break;
 
             case PacketType.S_Move:
-                var move = JsonUtility.FromJson<S_Move>(json);
+                var move = JsonConvert.DeserializeObject<S_Move>(json);
                 EnqueueMainThread(() => OnPlayerMoved?.Invoke(move));
                 break;
 
             case PacketType.S_Spawn:
-                var spawn = JsonUtility.FromJson<S_Spawn>(json);
+                var spawn = JsonConvert.DeserializeObject<S_Spawn>(json);
                 EnqueueMainThread(() => OnPlayerSpawned?.Invoke(spawn));
                 break;
 
             case PacketType.S_Despawn:
-                var despawn = JsonUtility.FromJson<S_Despawn>(json);
+                var despawn = JsonConvert.DeserializeObject<S_Despawn>(json);
                 EnqueueMainThread(() => OnPlayerDespawned?.Invoke(despawn));
                 break;
 

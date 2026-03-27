@@ -1,3 +1,4 @@
+using Shared.Protocol;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,6 +12,9 @@ using TMPro;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
+    private const string PrefKeyAccountName = "AccountName";
+    private const string PrefKeyPassword = "Password";
+
     private enum GameState { Title, Connecting, Playing, GameOver }
 
     private GameState _state = GameState.Title;
@@ -26,10 +30,16 @@ public class GameManager : MonoBehaviour
     private GameObject _connectingPanel;
     private TextMeshProUGUI _connectingText;
 
+    // 로그인 UI
+    private TMP_InputField _idInput;
+    private TMP_InputField _pwInput;
+    private Button _loginButton;
+
     private void Start()
     {
         CreateUICanvas();
         LoadUIPanels();
+        CreateLoginUI();
         EnsureNetworkManager();
 
         if (_skipTitle)
@@ -49,8 +59,11 @@ public class GameManager : MonoBehaviour
         switch (_state)
         {
             case GameState.Title:
-                if (Input.GetMouseButtonDown(0) || Input.anyKeyDown)
-                    StartGame();
+                if (_idInput != null && !_idInput.isFocused && !_pwInput.isFocused
+                    && Input.GetKeyDown(KeyCode.Return))
+                {
+                    OnLoginButtonClicked();
+                }
                 break;
 
             case GameState.Playing:
@@ -59,8 +72,29 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void OnLoginButtonClicked()
+    {
+        var id = _idInput.text.Trim();
+        var pw = _pwInput.text;
+
+        if (string.IsNullOrEmpty(id))
+        {
+            _idInput.Select();
+            return;
+        }
+
+        PlayerPrefs.SetString(PrefKeyAccountName, id);
+        PlayerPrefs.SetString(PrefKeyPassword, pw);
+        PlayerPrefs.Save();
+
+        StartGame();
+    }
+
     private void StartGame()
     {
+        var id = PlayerPrefs.GetString(PrefKeyAccountName, "");
+        var pw = PlayerPrefs.GetString(PrefKeyPassword, "");
+
         _state = GameState.Connecting;
         _titlePanel.SetActive(false);
         ShowConnecting("서버에 연결하는 중...");
@@ -71,7 +105,7 @@ public class GameManager : MonoBehaviour
             {
                 SetConnectingText("로그인 중...");
                 NetworkManager.Instance.OnLoginResponse += OnLoginResponse;
-                NetworkManager.Instance.SendLogin("Player_" + UnityEngine.Random.Range(1000, 9999));
+                NetworkManager.Instance.SendLogin(id, pw);
             }
             else
             {
@@ -89,7 +123,7 @@ public class GameManager : MonoBehaviour
 
         if (!response.Success)
         {
-            Debug.LogError("[GameManager] 로그인 실패");
+            Debug.LogError($"[GameManager] 로그인 실패: {response.Message}");
             ShowTitle();
             return;
         }
@@ -118,6 +152,9 @@ public class GameManager : MonoBehaviour
         _state = GameState.Title;
         _titlePanel.SetActive(true);
         _gameOverPanel.SetActive(false);
+
+        if (_idInput != null)
+            _idInput.Select();
     }
 
     private void ShowGameOver()
@@ -186,6 +223,144 @@ public class GameManager : MonoBehaviour
         BindButton(_gameOverPanel, "TitleButton", GoToTitle);
 
         _gameOverPanel.SetActive(false);
+    }
+
+    // ─────────────────────────────────────
+    // 로그인 UI
+    // ─────────────────────────────────────
+
+    private void CreateLoginUI()
+    {
+        // 기존 PressStartText 숨기기
+        var pressStart = _titlePanel.transform.Find("PressStartText");
+        if (pressStart != null)
+            pressStart.gameObject.SetActive(false);
+
+        // 로그인 폼 컨테이너
+        var formGO = new GameObject("LoginForm");
+        formGO.transform.SetParent(_titlePanel.transform, false);
+        var formRect = formGO.AddComponent<RectTransform>();
+        formRect.anchorMin = new Vector2(0.5f, 0.3f);
+        formRect.anchorMax = new Vector2(0.5f, 0.3f);
+        formRect.sizeDelta = new Vector2(400f, 200f);
+        formRect.anchoredPosition = Vector2.zero;
+
+        // ID 입력
+        _idInput = CreateInputField(formGO.transform, "IdInput", "ID", false, new Vector2(0f, 60f));
+        _idInput.text = PlayerPrefs.GetString(PrefKeyAccountName, "");
+
+        // PW 입력
+        _pwInput = CreateInputField(formGO.transform, "PwInput", "Password", true, new Vector2(0f, 0f));
+        _pwInput.text = PlayerPrefs.GetString(PrefKeyPassword, "");
+
+        // Tab 키로 ID→PW 이동
+        _idInput.onSubmit.AddListener(_ => _pwInput.Select());
+        _pwInput.onSubmit.AddListener(_ => OnLoginButtonClicked());
+
+        // 로그인 버튼
+        _loginButton = CreateButton(formGO.transform, "LoginButton", "Login", new Vector2(0f, -60f));
+        _loginButton.onClick.AddListener(OnLoginButtonClicked);
+    }
+
+    private static TMP_InputField CreateInputField(Transform parent, string name, string placeholder,
+        bool isPassword, Vector2 position)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+
+        var rect = go.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(360f, 50f);
+        rect.anchoredPosition = position;
+
+        var bg = go.AddComponent<Image>();
+        bg.color = new Color(0.15f, 0.15f, 0.15f, 0.9f);
+
+        // 텍스트 영역
+        var textArea = new GameObject("Text Area");
+        textArea.transform.SetParent(go.transform, false);
+        var taRect = textArea.AddComponent<RectTransform>();
+        taRect.anchorMin = Vector2.zero;
+        taRect.anchorMax = Vector2.one;
+        taRect.offsetMin = new Vector2(10f, 5f);
+        taRect.offsetMax = new Vector2(-10f, -5f);
+        textArea.AddComponent<RectMask2D>();
+
+        // 입력 텍스트
+        var textGO = new GameObject("Text");
+        textGO.transform.SetParent(textArea.transform, false);
+        var textRect = textGO.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.fontSize = 28;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.MidlineLeft;
+        tmp.enableWordWrapping = false;
+        tmp.overflowMode = TextOverflowModes.Overflow;
+
+        // 플레이스홀더
+        var phGO = new GameObject("Placeholder");
+        phGO.transform.SetParent(textArea.transform, false);
+        var phRect = phGO.AddComponent<RectTransform>();
+        phRect.anchorMin = Vector2.zero;
+        phRect.anchorMax = Vector2.one;
+        phRect.offsetMin = Vector2.zero;
+        phRect.offsetMax = Vector2.zero;
+
+        var phTmp = phGO.AddComponent<TextMeshProUGUI>();
+        phTmp.text = placeholder;
+        phTmp.fontSize = 28;
+        phTmp.fontStyle = FontStyles.Italic;
+        phTmp.color = new Color(0.6f, 0.6f, 0.6f, 0.6f);
+        phTmp.alignment = TextAlignmentOptions.MidlineLeft;
+        phTmp.enableWordWrapping = false;
+        phTmp.overflowMode = TextOverflowModes.Overflow;
+
+        var inputField = go.AddComponent<TMP_InputField>();
+        inputField.textViewport = taRect;
+        inputField.textComponent = tmp;
+        inputField.placeholder = phTmp;
+        inputField.fontAsset = tmp.font;
+        inputField.pointSize = 28;
+        inputField.caretColor = Color.white;
+        inputField.selectionColor = new Color(0.3f, 0.5f, 0.8f, 0.5f);
+
+        if (isPassword)
+            inputField.contentType = TMP_InputField.ContentType.Password;
+
+        return inputField;
+    }
+
+    private static Button CreateButton(Transform parent, string name, string label, Vector2 position)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+
+        var rect = go.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(360f, 50f);
+        rect.anchoredPosition = position;
+
+        var bg = go.AddComponent<Image>();
+        bg.color = new Color(0.2f, 0.4f, 0.7f, 1f);
+
+        var textGO = new GameObject("Text");
+        textGO.transform.SetParent(go.transform, false);
+        var textRect = textGO.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        var tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.text = label;
+        tmp.fontSize = 30;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.Center;
+
+        return go.AddComponent<Button>();
     }
 
     // ─────────────────────────────────────

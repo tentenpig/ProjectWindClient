@@ -23,7 +23,8 @@
       "Bash(dotnet build:*)",
       "Bash(cmd //c \"rename ECS ProjectWindClient\")",
       "Bash(cd /tmp)",
-      "Bash(powershell -Command \"Rename-Item ''D:\\\\Workbench\\\\ToyProject\\\\ECS'' ''ProjectWindClient''\")"
+      "Bash(powershell -Command \"Rename-Item ''D:\\\\Workbench\\\\ToyProject\\\\ECS'' ''ProjectWindClient''\")",
+      "Bash(find /d/Workbench/ToyProject/ProjectWind/ProjectWindServer -path *Shared* -o -path *Protocol* -o -path *Packet*)"
     ]
   }
 }
